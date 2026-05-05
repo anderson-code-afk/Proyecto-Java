@@ -33,6 +33,9 @@ public class Frame2 extends javax.swing.JFrame {
     private JScrollPane scroll;
     private String nombreCliente;
     private double ingresosCliente;
+    private boolean modoEdicion = false;
+    private int filaEditando = -1;
+    private Grafica grafica;
     
     
     
@@ -159,12 +162,26 @@ public class Frame2 extends javax.swing.JFrame {
         btn2.setBackground(Color.WHITE);
         add(btn2);
         
+        btn2.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Editar();
+            }
+        });
+        
         btn3 = new JButton("Borrar");
         btn3.setBounds(45, 400, 300, 40);
         btn3.setFont(new Font("Serif", Font.PLAIN, 25));
         btn3.setForeground(Color.BLACK);
         btn3.setBackground(Color.WHITE);
         add(btn3);
+        
+        btn3.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Borrar();
+            }
+        });
         
         btn4 = new JButton("Limpiar");
         btn4.setBounds(45, 450, 300, 40);
@@ -173,6 +190,16 @@ public class Frame2 extends javax.swing.JFrame {
         btn4.setBackground(Color.WHITE);
         add(btn4);
         
+        btn4.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Limpiar();
+            }
+        });
+        grafica = new Grafica();
+        grafica.setBounds(445, 600, 550, 300);
+        grafica.setBackground(Color.WHITE);
+        add(grafica);
         
     }
     
@@ -193,6 +220,7 @@ public class Frame2 extends javax.swing.JFrame {
         lblTG.setText("Total gastado: $" + (int)total);
         lblB.setText("Balance: $" + (int)(ingresosCliente - total));
         lblI.setText("Ingresos: $" + (int)ingresosCliente);
+        actualizarGrafica();
         
     }
         
@@ -200,8 +228,66 @@ public class Frame2 extends javax.swing.JFrame {
         nombreCliente = nombre;
         ingresosCliente = ingresos;
     }
-
-
+    public void Borrar(){
+        int fila = tabla.getSelectedRow();
+        if (fila==-1){
+            JOptionPane.showMessageDialog(this, "Seleccione una fila");
+            return;
+        }
+        modelo.removeRow(fila);
+        double total = 0;
+        for (int i = 0; i < modelo.getRowCount(); i++) {
+            total += Double.parseDouble(modelo.getValueAt(i, 3).toString());
+        }
+        lblTG.setText("Total gastado: $" + (int)total);
+        lblB.setText("Balance: $" + (int)(ingresosCliente - total));
+        lblI.setText("Ingresos: $" + (int)ingresosCliente);
+    }
+    public void Limpiar(){
+        txt1.setText("");
+        txt2.setText("");
+        t1.setText("");
+        cb.setSelectedIndex(0);
+        actualizarGrafica();
+    }
+    public void Editar(){
+    if (!modoEdicion){
+        filaEditando = tabla.getSelectedRow();
+        if (filaEditando == -1){
+            JOptionPane.showMessageDialog(this, "Seleccione una fila");
+            return;
+        }
+        txt1.setText(modelo.getValueAt(filaEditando, 1).toString());
+        txt2.setText(modelo.getValueAt(filaEditando, 2).toString());
+        t1.setText(modelo.getValueAt(filaEditando, 3).toString());
+        modoEdicion = true;
+        btn2.setText("Guardar cambios");
+    }else {
+            modelo.setValueAt(txt1.getText(), filaEditando, 1);
+            modelo.setValueAt(txt2.getText(), filaEditando, 2);
+            modelo.setValueAt(Double.parseDouble(t1.getText()), filaEditando, 3);
+            modelo.setValueAt(cb.getSelectedItem().toString(), filaEditando, 4);
+            modoEdicion = false;
+            btn2.setText("Editar");
+            Limpiar();
+        }
+}
+    public void actualizarGrafica(){
+    double[] valores = new double[6];
+    String[] cats = {"Vivienda","Alimentacion","Transporte","Salud","Entretenimiento","Otro"};
+    
+    for (int i = 0; i < modelo.getRowCount(); i++){
+        String cat = modelo.getValueAt(i, 4).toString();
+        double monto = Double.parseDouble(modelo.getValueAt(i, 3).toString());
+        for (int j = 0; j < cats.length; j++){
+            if (cat.equals(cats[j])){
+                valores[j] += monto;
+            }
+        }
+    }
+    grafica.actualizarDatos(valores);
+}
+    
     
     
     
@@ -230,10 +316,7 @@ public class Frame2 extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
- 
-    /**
-     * @param args the command line arguments
-     */
+
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
